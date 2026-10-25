@@ -1,0 +1,26 @@
+# Python 虚拟环境与缓存
+venv/
+__pycache__/
+*.pyc
+
+# 运行时的工作目录内容（目录本身靠 .gitkeep 保留结构）
+images/*
+masks/*
+my_sign/*
+output/*
+tmp/
+models/*
+!images/.gitkeep
+!masks/.gitkeep
+!my_sign/.gitkeep
+!output/.gitkeep
+!models/.gitkeep
+
+# 日志与临时文件
+*.log
+debug.log
+
+# 密钥类文件（本工具用不到，防手滑）
+.env
+*.key
+*.pem
