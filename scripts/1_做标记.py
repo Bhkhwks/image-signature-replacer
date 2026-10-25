@@ -8,12 +8,6 @@
                                      # 直到全部图标记完（已标记过的自动跳过）
   python 1_做标记.py 1.jpg           # 直接指定图名，给该图做单独标记（重做某张用这个）
   python 1_做标记.py default         # 用 images 里第一张图做"通用标记"，全部图共用
-  python 1_做标记.py auto 工作许可人              # OCR 自动定位栏目标题，选图后单独标记
-  python 1_做标记.py auto 工作许可人 default      # 同上，但存成通用标记
-  python 1_做标记.py auto 工作许可人 1.jpg        # 同上，直接指定图名
-
-auto 模式说明：OCR 读图找到"工作许可人"这类栏目标题的位置（绿框显示），
-自动在标题下方生成建议签名区（红框）。按 s 直接采纳，或 r 清空后手动拉框。
 
 保存位置：
   单独标记 -> masks/图名.png（只对同名图生效，优先级高）
@@ -48,8 +42,7 @@ try:
 except Exception:
     ctypes.windll.user32.SetProcessDPIAware()        # 更旧的系统
 
-from signlib import (imread_cn, imwrite_cn, load_upright_image,
-                     ocr_find_keyword_boxes, suggest_sign_box)
+from signlib import imread_cn, imwrite_cn, load_upright_image
 
 IMAGES_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "images")
 MASKS_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "masks")
@@ -605,72 +598,8 @@ def run_continuous():
         print("全部标记完成！双击 双击_批量换签名.bat 开始修图")
 
 
-# ---------- OCR 自动定位栏目标题 ----------
 def main():
     args = sys.argv[1:]
-
-    # ---------- auto 模式：OCR 按栏目标题自动定位 ----------
-    if args and args[0] == "auto":
-        if len(args) < 2:
-            print('用法: python 1_做标记.py auto 关键词 [default|图名]')
-            print('例如: python 1_做标记.py auto 工作许可人 default')
-            return
-        keyword = args[1]
-        rest = args[2:]
-        files = list_images()
-        if not files:
-            print("images 文件夹里没有图片，请先放几张原图进去")
-            return
-        if rest and rest[0] == "default":
-            name = files[0]
-            out_name = "default_mask.png"
-            mode = "通用标记（所有图共用）"
-        elif rest:
-            name = rest[0]
-            if not os.path.isfile(os.path.join(IMAGES_DIR, name)):
-                print(f"images 里找不到 {name}")
-                return
-            out_name = os.path.splitext(name)[0] + ".png"
-            mode = "单独标记（只对这张图生效）"
-        else:
-            name = pick_image()
-            out_name = os.path.splitext(name)[0] + ".png"
-            mode = "单独标记（只对这张图生效）"
-
-        img = imread_cn(os.path.join(IMAGES_DIR, name))   # upright 里已是转正图，直接读
-        if img is None:
-            print(f"图片读取失败: {name}")
-            return
-        print(f"\n当前模式: {mode} | 图片: {name} | 定位关键词: {keyword}")
-        from rapidocr import RapidOCR
-        engine = RapidOCR()
-        hits = ocr_find_keyword_boxes(engine, img, keyword)
-        if not hits:
-            print(f"OCR 没找到含 '{keyword}' 的栏目，请手动拉框（模式退回普通标记）")
-            mask, minfo = run_marker(img, "mask marker")
-        else:
-            if len(hits) > 1:
-                print(f"找到 {len(hits)} 处匹配的标题（绿框全部显示），建议签名区按第一处生成")
-            else:
-                print("找到栏目标题（绿框），已在其下方生成建议签名区（红框）")
-            preset = [suggest_sign_box(hits[0], img.shape)]
-            mask, minfo = run_marker(img, "mask marker", preset_boxes=preset, ref_boxes=hits)
-        if mask is None:
-            # 没保存标记，但旋转过的图仍转正写回（旋转属于图的修正，独立于标记保存）
-            if minfo.get("rotated"):
-                persist_rotation(name, minfo)
-            print("未保存，退出")
-            return
-        os.makedirs(MASKS_DIR, exist_ok=True)
-        out_path = os.path.join(MASKS_DIR, out_name)
-        imwrite_cn(out_path, mask)
-        # 存的是本图自己的 mask 时旧 mask 已被覆盖，不用同步旋转；存 default_mask 时本图
-        # 自己的旧 mask（若有）需要同步转
-        if minfo.get("rotated"):
-            persist_rotation(name, minfo,
-                             mask_just_saved=(out_name == os.path.splitext(name)[0] + ".png"))
-        print(f"已保存标记图: {out_path}（白=擦除区，黑=保留）")
-        return
 
     if args and args[0] == "default":
         files = list_images()

@@ -31,15 +31,7 @@ python -m venv venv; .\venv\Scripts\Activate.ps1; python -m pip install -r requi
 
 ### 第 2 步：做标记（告诉工具旧签名在哪）
 
-**方式 A：OCR 自动定位**（推荐先试）
-
-```
-python scripts/1_做标记.py auto 关键词 default
-```
-
-把"关键词"换成你图上要找的标题文字。工具自动读图：**绿框** = 找到的标题，**红框** = 自动猜的签名区。末尾的 `default` 表示存成**通用标记**（所有图共用，适合同一模板的批量图）。
-
-**方式 B：手动拉框**（OCR 没认出来时用，比如标题被手写字盖住）
+手动拉框：
 
 ```
 python scripts/1_做标记.py default
@@ -63,8 +55,6 @@ python scripts/1_做标记.py default
 python scripts/1_做标记.py                          # 列出图片，输序号选一张，单独标记
 python scripts/1_做标记.py 1.jpg                    # 指定图名，单独标记
 python scripts/1_做标记.py default                  # 用第一张图做通用标记（所有图共用）
-python scripts/1_做标记.py auto 关键词 default       # OCR 定位 + 存通用标记
-python scripts/1_做标记.py auto 关键词 1.jpg         # OCR 定位 + 单独标记某张图
 ```
 
 **标记规则**：单独标记（按图名存的）**优先于**通用标记（default）。大部分图位置一样就只做 default；个别图位置不同，再给那张图单独做一次。
@@ -94,7 +84,6 @@ python scripts/2_批量换签名.py
 
 | 问题 | 处理 |
 |---|---|
-| OCR 严格匹配没命中 | 终端会打印 OCR 认出的全部文字。多数因为标题被手写字盖住认糊了，直接手动拉框（方式 B） |
 | 擦除后背景有痕迹 | AI 对纯白/规则背景效果最好；个别复杂背景可把框拉小一点只框住笔画 |
 | 新签名位置/大小不满意 | 重新做标记：框的位置决定签名贴哪（贴在框的中心）、框的大小决定签名大小 |
 | 某张图擦错地方 | 给那张图单独做一次标记（按图名），单独标记会覆盖通用标记 |
